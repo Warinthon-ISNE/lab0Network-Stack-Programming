@@ -12,6 +12,9 @@ public partial class Crawler
     protected String? basedFolder = null;
     protected int maxLinksPerPage = 3;
 
+    // Track visited links for effiency and prevent loop
+    private HashSet<string> visited = new();
+
     /// <summary>
     /// Method <c>SetBasedFolder</c> sets based folder to store retrieved contents.
     /// </summary>
@@ -42,8 +45,10 @@ public partial class Crawler
     /// <param name="level">the number of level to recursively access to</param>
     public async Task GetPage(String url, int level)
     {
-        // Your code here
-        // Note: you need this step for recursive operation
+        if (level <= 0)
+        {
+            return;
+        }
         if (basedFolder == null)
         {
             throw new Exception("Please set the value of base folder using SetBasedFolder method first.");
@@ -52,6 +57,13 @@ public partial class Crawler
         {
             throw new ArgumentNullException(nameof(url));
         }
+
+        // Prevent visiting the same URL multiple times
+        if (visited.Contains(url))
+        {
+            return;
+        }
+        visited.Add(url);
 
         // For simplicity, we will use <c>HttpClient</c> here, but if you want you can try <c>TcpClient</c>
         HttpClient client = new();
@@ -73,14 +85,15 @@ public partial class Crawler
                 // For each link, let's recursive!!!
                 foreach (String link in links)
                 {
-                    // We only interested in http/https link
-                    if(link.StartsWith("http", StringComparison.InvariantCultureIgnoreCase))
+                    // Only crawl http/https links
+                    if (link.StartsWith("http", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        // Your code here
-                        // Note: It should be recursive operation here
+                        // Recursive call
+                        await GetPage(link, level - 1);
 
-                        // limit number of links in the page, otherwise it will load lots of data
-                        if (++count >= maxLinksPerPage) break;
+                        // Limit number of links per page
+                        if (++count >= maxLinksPerPage)
+                            break;
                     }
                 }
             }
@@ -124,14 +137,27 @@ public partial class Crawler
     }
 
 }
+
+// Usage:
+// dotnet run <outputFolder> <maxLinks> <startUrl> <depth>
+
 class Program
 {
-    static void Main(string[] args)
+    // Changed to async Task to properly await the crawler
+    static async Task Main(string[] args)
     {
         Crawler cw = new();
-        // Can you improve this code?
-        cw.SetBasedFolder(".");
-        cw.SetMaxLinksPerPage(5);
-        cw.GetPage("https://dandadan.net/", 2).Wait();
+
+        // Use command line args or default values if not provided
+        string outputFolder = args.Length > 0 ? args[0] : ".";
+        int maxLinks = args.Length > 1 && int.TryParse(args[1], out int m) ? m : 5;
+        string startUrl = args.Length > 2 ? args[2] : "https://dandadan.net/";
+        int depth = args.Length > 3 && int.TryParse(args[3], out int d) ? d : 2;
+
+        cw.SetBasedFolder(outputFolder);
+        cw.SetMaxLinksPerPage(maxLinks);
+        
+        // Await the task instead of blocking with .Wait()
+        await cw.GetPage(startUrl, depth);
     }
 }

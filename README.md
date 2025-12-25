@@ -1,13 +1,13 @@
-This is the sourcecode for Lab 0 of CPE433, Computer Engineering, Chiang Mai University.
+Usage:
+dotnet run <outputFolder> <maxLinks> <startUrl> <depth>
 
-Software Requirement:
-- .Net Core 8.0
+If provide:
 
-Build Instruction:
-You should be able to build using command line (i.e., dotnet build) or through your IDE without any extra library
+<outputFolder> is to download to folder of your choice
+<maxLinks> is to download max link per pages
+<startUrl> is to pick your desire website
+<depth> is how deep we want to go into website
 
-Lab Instruction:
-Current code will load only the webpage of the given URL, make it "recursively" load all webpages from the link of the original page.
+OR
 
-Extra score:
-Can you improve Main method in Program class? for example, those parameters should not be hard-coded.
+dotnet run -> which will run with default setting
